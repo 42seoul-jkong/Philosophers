@@ -1,0 +1,18 @@
+# MacOS Temporary files
+.DS_Store
+
+# Prerequisites
+*.d
+
+# Object files
+*.o
+
+# Precompiled Headers
+*.gch
+
+# Debug files
+*.dSYM/
+
+# Executable
+/philo/philo
+/philo_bonus/philo_bonus
