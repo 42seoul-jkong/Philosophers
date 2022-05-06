@@ -20,8 +20,11 @@ OBJECTS_DIR = objs/
 HEADER = philo.h
 
 TARGET = philo
-SRCS = philo.c
+SRCS = philo.c philo_opt.c
 OBJS = $(addprefix $(OBJECTS_DIR), $(SRCS:.c=.o))
+
+CFLAGS += -pthread
+LDFLAGS += -pthread
 
 C_SANITIZER_FLAGS = address undefined
 CFLAGS += $(addprefix -fsanitize=, $(C_SANITIZER_FLAGS))
@@ -36,7 +39,7 @@ CFLAGS += $(addprefix -, $(C_DEBUG_FLAGS))
 all: $(TARGET)
 clean:				;	$(RM) -r $(OBJECTS_DIR)
 fclean: clean		;	$(RM) $(TARGET)
-re: fclean all
+re: fclean			;	make all
 bonus: all
 
 $(OBJECTS_DIR):
