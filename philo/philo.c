@@ -6,7 +6,7 @@
 /*   By: jkong <jkong@student.42seoul.kr>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/04 22:11:46 by jkong             #+#    #+#             */
-/*   Updated: 2022/05/07 03:56:18 by jkong            ###   ########.fr       */
+/*   Updated: 2022/05/07 13:30:59 by jkong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,16 +16,16 @@ static void	*philo_start(void *arg)
 {
 	t_philo_arg *const	args = arg;
 
-	for (int i = 0; i < 500; i++)
+	while (args->eat_counter-- > 0)
 	{
-		pthread_mutex_lock(&args->fork[0]);
-		pthread_mutex_lock(&args->fork[1]);
+		pthread_mutex_lock(args->fork[0]);
+		pthread_mutex_lock(args->fork[1]);
 		struct timeval tv;
 		gettimeofday(&tv, NULL);
-		printf("%ld %zu : %d\n", tv.tv_usec, args->philosopher_number, i);
+		printf("%ld %lu : (%ld)\n", tv.tv_usec, args->philosopher_number, args->eat_counter);
 		usleep(3500);
-		pthread_mutex_unlock(&args->fork[1]);
-		pthread_mutex_unlock(&args->fork[0]);
+		pthread_mutex_unlock(args->fork[1]);
+		pthread_mutex_unlock(args->fork[0]);
 	}
 	return (args);
 }
@@ -48,6 +48,7 @@ time_to_sleep [number_of_times_each_philosopher_must_eat]\n", argv[0]);
 	forks = malloc(opt.number_of_philosophers * sizeof(pthread_mutex_t));
 	if (philos && forks)
 	{
+		memset(forks, 0, opt.number_of_philosophers * sizeof(pthread_mutex_t));
 		i = 0;
 		while (i < opt.number_of_philosophers)
 			pthread_mutex_init(&forks[i++], NULL);
@@ -56,10 +57,10 @@ time_to_sleep [number_of_times_each_philosopher_must_eat]\n", argv[0]);
 			while (i < opt.number_of_philosophers)
 			{
 				philos[i].thread_arg.philosopher_number = i;
-				philos[i].thread_arg.eat_count = 0;
+				philos[i].thread_arg.eat_counter = opt.number_of_times_each_philosopher_must_eat;
 				philos[i].thread_arg.lock = &lock;
-				philos[i].thread_arg.fork[0] = forks[i];
-				philos[i].thread_arg.fork[1] = forks[(i + 1) % opt.number_of_philosophers];
+				philos[i].thread_arg.fork[0] = &forks[i];
+				philos[i].thread_arg.fork[1] = &forks[(i + 1) % opt.number_of_philosophers];
 				i++;
 			}
 			{

@@ -6,7 +6,7 @@
 /*   By: jkong <jkong@student.42seoul.kr>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/04 22:11:46 by jkong             #+#    #+#             */
-/*   Updated: 2022/05/07 03:26:49 by jkong            ###   ########.fr       */
+/*   Updated: 2022/05/07 13:26:09 by jkong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,9 +32,9 @@ typedef struct s_philo_option
 typedef struct s_philo_arg
 {
 	size_t			philosopher_number;
-	size_t			eat_count;
+	size_t			eat_counter;
 	pthread_mutex_t	*lock;
-	pthread_mutex_t	fork[2];
+	pthread_mutex_t	*fork[2];
 }	t_philo_arg;
 
 typedef struct s_philo
