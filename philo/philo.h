@@ -6,15 +6,19 @@
 /*   By: jkong <jkong@student.42seoul.kr>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/04 22:11:46 by jkong             #+#    #+#             */
-/*   Updated: 2022/05/07 23:43:18 by jkong            ###   ########.fr       */
+/*   Updated: 2022/05/08 23:29:14 by jkong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef PHILO_H
 # define PHILO_H
 
-# ifndef DPP_DELAY_LIMIT
-#  define DPP_DELAY_LIMIT 10000L
+# ifndef DPP_MEAL_LIMIT
+#  define DPP_MEAL_LIMIT 10000L
+# endif
+
+# ifndef DPP_DIVIDER
+#  define DPP_DIVIDER 500
 # endif
 
 # include <sys/time.h>
@@ -36,7 +40,7 @@ typedef struct s_philo_option
 typedef struct s_problem
 {
 	int				exit;
-	int				interrupted;
+	int				cancel;
 	t_philo_option	opt;
 	pthread_mutex_t	lock;
 	struct timeval	begin;
@@ -45,27 +49,30 @@ typedef struct s_problem
 typedef struct s_fork
 {
 	pthread_mutex_t	lock;
+	int				taken;
 }	t_fork;
 
 typedef struct s_philo_arg
 {
-	size_t		philosopher_number;
-	size_t		eat_counter;
-	t_problem	*problem;
-	t_fork		*fork[2];
+	size_t			philosopher_number;
+	size_t			eat_counter;
+	t_problem		*problem;
+	t_fork			*fork[2];
+	struct timeval	last_meal;
 }	t_philo_arg;
 
 typedef struct s_philo
 {
-	pthread_t	thread_id;
-	t_philo_arg	thread_arg;
-	void		*thread_res;
+	pthread_t		thread_id;
+	t_philo_arg		thread_arg;
+	void			*thread_res;
 }	t_philo;
 
 int		philo_getopt(int argc, char *argv[], t_philo_option *out);
 
-void	dpp_send_message(time_t timestamp_in_mili, size_t x, const char *str);
-time_t	dpp_get_timestamp(struct timeval *tv_base);
-int		dpp_delay(time_t time, int *token);
+int		dpp_fork_try_take(t_fork *fork, struct timeval *time, time_t timeout);
+void	dpp_fork_put_down(t_fork *fork);
+void	dpp_send_message(t_problem *problem, size_t x, const char *str);
+int		dpp_delay(t_problem *problem, time_t time);
 
 #endif

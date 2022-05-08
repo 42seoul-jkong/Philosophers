@@ -6,7 +6,7 @@
 /*   By: jkong <jkong@student.42seoul.kr>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/04 22:11:46 by jkong             #+#    #+#             */
-/*   Updated: 2022/05/07 23:48:49 by jkong            ###   ########.fr       */
+/*   Updated: 2022/05/09 03:00:03 by jkong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,38 +16,62 @@ static void	*philo_dine(void *arg)
 {
 	t_philo_arg *const	args = arg;
 	const size_t		x = args->philosopher_number;
-	time_t				timestamp;
+	const time_t		timeout = args->problem->opt.time_to_die;
 
 	pthread_mutex_lock(&args->problem->lock);
 	pthread_mutex_unlock(&args->problem->lock);
 	while (args->eat_counter-- > 0)
 	{
-		timestamp = dpp_get_timestamp(&args->problem->begin);
-		dpp_send_message(timestamp, x, "has taken a fork");
-		pthread_mutex_lock(&args->fork[0]->lock);
-		pthread_mutex_lock(&args->fork[1]->lock);
-		timestamp = dpp_get_timestamp(&args->problem->begin);
-		dpp_send_message(timestamp, x, "is eating");
-		dpp_delay(args->problem->opt.time_to_eat, &args->problem->interrupted);
-		timestamp = dpp_get_timestamp(&args->problem->begin);
-		dpp_send_message(timestamp, x, "is sleeping");
-		dpp_delay(args->problem->opt.time_to_sleep, &args->problem->interrupted);
-		timestamp = dpp_get_timestamp(&args->problem->begin);
-		dpp_send_message(timestamp, x, "is thinking");
-		pthread_mutex_unlock(&args->fork[1]->lock);
-		pthread_mutex_unlock(&args->fork[0]->lock);
-		timestamp = dpp_get_timestamp(&args->problem->begin);
-		dpp_send_message(timestamp, x, "died");
+		if (dpp_fork_try_take(args->fork[0], &args->last_meal, timeout))
+		{
+			dpp_send_message(args->problem, x, "died");
+			//...
+			pthread_mutex_lock(&args->problem->lock);
+			args->problem->cancel = 1;
+			pthread_mutex_unlock(&args->problem->lock);
+			break ;
+		}
+		dpp_send_message(args->problem, x, "has taken a fork");
+		if (dpp_fork_try_take(args->fork[1], &args->last_meal, timeout))
+		{
+			dpp_send_message(args->problem, x, "died");
+			//...
+			pthread_mutex_lock(&args->problem->lock);
+			args->problem->cancel = 1;
+			pthread_mutex_unlock(&args->problem->lock);
+			//...
+			dpp_fork_put_down(args->fork[0]);
+			break ;
+		}
+		dpp_send_message(args->problem, x, "is eating");
+		gettimeofday(&args->last_meal, NULL);
+		if (dpp_delay(args->problem, args->problem->opt.time_to_eat))
+		{
+			//...
+			dpp_fork_put_down(args->fork[1]);
+			dpp_fork_put_down(args->fork[0]);
+			break ;
+		}
+		dpp_fork_put_down(args->fork[1]);
+		dpp_fork_put_down(args->fork[0]);
+		dpp_send_message(args->problem, x, "is sleeping");
+		if (dpp_delay(args->problem, args->problem->opt.time_to_sleep))
+			break ;
+		dpp_send_message(args->problem, x, "is thinking");
+		usleep(0);
 	}
-	return (args);
+	return (NULL);
 }
 
-static int	_on_error(t_problem *problem, int s, const char *msg)
+static int	_proc_error(t_problem *problem, int s, int err, const char *msg)
 {
-	problem->exit = EXIT_FAILURE;
-	problem->interrupted = 1;
-	(void)s;
-	(void)msg;
+	if (s != err)
+	{
+		problem->exit = EXIT_FAILURE;
+		problem->cancel = 1;
+		(void)msg;
+		return (1);
+	}
 	return (0);
 }
 
@@ -59,19 +83,19 @@ static int	_init(t_problem *problem, t_philo *philos, t_fork *forks)
 	int				s;
 
 	s = pthread_mutex_init(&problem->lock, NULL);
-	if (s != 0)
-		return (_on_error(problem, s, "pthread_mutex_init"));
+	if (_proc_error(problem, s, 0, "pthread_mutex_init"))
+		return (0);
 	i = 0;
 	while (i < n)
 	{
 		philos[i].thread_arg.philosopher_number = i;
 		philos[i].thread_arg.eat_counter = m;
 		philos[i].thread_arg.problem = problem;
-		philos[i].thread_arg.fork[!(i & 1)] = &forks[i];
-		philos[i].thread_arg.fork[i & 1] = &forks[(i + 1) % n];
+		philos[i].thread_arg.fork[!!(i & 1)] = &forks[i];
+		philos[i].thread_arg.fork[!(i & 1)] = &forks[(i + 1) % n];
 		s = pthread_mutex_init(&forks[i].lock, NULL);
-		if (s != 0)
-			return (_on_error(problem, s, "pthread_mutex_init"));
+		if (_proc_error(problem, s, 0, "pthread_mutex_init"))
+			return (0);
 		i++;
 	}
 	return (1);
@@ -89,14 +113,14 @@ static void	_final(t_problem *problem, t_philo *philos, t_fork *forks)
 	{
 		s = pthread_create(&philos[i].thread_id, NULL,
 				philo_dine, &philos[i].thread_arg);
-		if (s != 0)
-		{
-			_on_error(problem, s, "pthread_create");
+		if (_proc_error(problem, s, 0, "pthread_create"))
 			break ;
-		}
 		i++;
 	}
 	gettimeofday(&problem->begin, NULL);
+	i = 0;
+	while (i < n)
+		philos[i++].thread_arg.last_meal = problem->begin;
 	pthread_mutex_unlock(&problem->lock);
 	while (i-- > 0)
 		pthread_join(philos[i].thread_id, &philos[i].thread_res);
