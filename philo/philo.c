@@ -6,7 +6,7 @@
 /*   By: jkong <jkong@student.42seoul.kr>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/04 22:11:46 by jkong             #+#    #+#             */
-/*   Updated: 2022/05/09 12:30:36 by jkong            ###   ########.fr       */
+/*   Updated: 2022/05/09 21:22:09 by jkong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 static void	*philo_dine(void *arg)
 {
 	t_philo_arg *const	args = arg;
-	const size_t		x = args->philosopher_number;
+	const size_t		x = 1 + args->philosopher_number;
 	const time_t		timeout = args->problem->opt.time_to_die;
 	struct timeval		last_meal;
 	time_t				delay;
@@ -23,11 +23,11 @@ static void	*philo_dine(void *arg)
 	pthread_mutex_lock(&args->problem->lock);
 	last_meal = args->problem->begin;
 	pthread_mutex_unlock(&args->problem->lock);
-	if (x & 1)
-		usleep(DPP_YIELD_FIRST);
+	if (!(x & 1))
+		usleep(DPP_YIELD);
 	while (args->eat_counter-- > 0)
 	{
-		if (dpp_fork_try_take(args->fork[0], &last_meal, timeout))
+		if (dpp_fork_try_take(args->fork[0], x, &last_meal, timeout))
 		{
 			dpp_send_message(args->problem, x, "died");
 			//...
@@ -37,7 +37,7 @@ static void	*philo_dine(void *arg)
 			break ;
 		}
 		dpp_send_message(args->problem, x, "has taken a fork");
-		if (dpp_fork_try_take(args->fork[1], &last_meal, timeout))
+		if (dpp_fork_try_take(args->fork[1], x, &last_meal, timeout))
 		{
 			dpp_send_message(args->problem, x, "died");
 			//...
@@ -45,7 +45,7 @@ static void	*philo_dine(void *arg)
 			args->problem->cancel = 1;
 			pthread_mutex_unlock(&args->problem->lock);
 			//...
-			dpp_fork_put_down(args->fork[0]);
+			dpp_fork_put_down(args->fork[0], x);
 			break ;
 		}
 		dpp_send_message(args->problem, x, "is eating");
@@ -54,12 +54,12 @@ static void	*philo_dine(void *arg)
 		if (dpp_delay(args->problem, delay, &last_meal, timeout))
 		{
 			//...
-			dpp_fork_put_down(args->fork[1]);
-			dpp_fork_put_down(args->fork[0]);
+			dpp_fork_put_down(args->fork[1], x);
+			dpp_fork_put_down(args->fork[0], x);
 			break ;
 		}
-		dpp_fork_put_down(args->fork[1]);
-		dpp_fork_put_down(args->fork[0]);
+		dpp_fork_put_down(args->fork[1], x);
+		dpp_fork_put_down(args->fork[0], x);
 		dpp_send_message(args->problem, x, "is sleeping");
 		delay = args->problem->opt.time_to_sleep;
 		if (dpp_delay(args->problem, delay, &last_meal, timeout))
@@ -126,6 +126,7 @@ static void	_final(t_problem *problem, t_philo *philos, t_fork *forks)
 	}
 	gettimeofday(&problem->begin, NULL);
 	pthread_mutex_unlock(&problem->lock);
+	usleep(DPP_YIELD);
 	i = n;
 	while (i-- > 0)
 		pthread_join(philos[i].thread_id, &philos[i].thread_res);

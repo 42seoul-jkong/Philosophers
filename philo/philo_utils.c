@@ -6,7 +6,7 @@
 /*   By: jkong <jkong@student.42seoul.kr>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/07 19:31:09 by jkong             #+#    #+#             */
-/*   Updated: 2022/05/09 12:31:46 by jkong            ###   ########.fr       */
+/*   Updated: 2022/05/09 21:55:06 by jkong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,10 +21,10 @@ static time_t	_get_timestamp(struct timeval *tv_base)
 	gettimeofday(&tv, NULL);
 	dsec = tv.tv_sec - tv_base->tv_sec;
 	dusec = tv.tv_usec - tv_base->tv_usec;
-	return (dsec * 1000 + dusec / 1000);
+	return (dsec * 1000L + dusec / 1000L);
 }
 
-int	dpp_fork_try_take(t_fork *fork,
+int	dpp_fork_try_take(t_fork *fork, size_t x,
 		struct timeval *time, time_t timeout)
 {
 	int	acquire;
@@ -35,7 +35,7 @@ int	dpp_fork_try_take(t_fork *fork,
 		pthread_mutex_lock(&fork->lock);
 		if (!fork->taken)
 		{
-			fork->taken++;
+			fork->taken = x;
 			acquire = 1;
 		}
 		pthread_mutex_unlock(&fork->lock);
@@ -47,16 +47,16 @@ int	dpp_fork_try_take(t_fork *fork,
 	return (1);
 }
 
-void	dpp_fork_put_down(t_fork *fork)
+void	dpp_fork_put_down(t_fork *fork, size_t x)
 {
 	pthread_mutex_lock(&fork->lock);
-	fork->taken--;
+	if (fork->taken == x)
+		fork->taken = 0;
 	pthread_mutex_unlock(&fork->lock);
 }
 
-void	dpp_send_message(t_problem *problem, size_t i, const char *str)
+void	dpp_send_message(t_problem *problem, size_t x, const char *str)
 {
-	const size_t	x = i + 1;
 	time_t			timestamp_in_mili;
 
 	pthread_mutex_lock(&problem->lock);

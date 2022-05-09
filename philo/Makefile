@@ -26,7 +26,7 @@ OBJS = $(addprefix $(OBJECTS_DIR), $(SRCS:.c=.o))
 CFLAGS += -pthread
 LDFLAGS += -pthread
 
-C_SANITIZER_FLAGS = undefined thread
+C_SANITIZER_FLAGS = # undefined thread
 CFLAGS += $(addprefix -fsanitize=, $(C_SANITIZER_FLAGS))
 LDFLAGS += $(addprefix -fsanitize=, $(C_SANITIZER_FLAGS))
 
