@@ -6,7 +6,7 @@
 /*   By: jkong <jkong@student.42seoul.kr>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/04 22:11:46 by jkong             #+#    #+#             */
-/*   Updated: 2022/05/09 21:54:59 by jkong            ###   ########.fr       */
+/*   Updated: 2022/05/10 00:48:41 by jkong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,11 +18,11 @@
 # endif
 
 # ifndef DPP_RATE
-#  define DPP_RATE 20
+#  define DPP_RATE 10
 # endif
 
 # ifndef DPP_YIELD
-#  define DPP_YIELD 500L
+#  define DPP_YIELD 1000L
 # endif
 
 # include <sys/time.h>
@@ -71,6 +71,7 @@ typedef struct s_philo
 	void		*thread_res;
 }	t_philo;
 
+void	*philo_dine(void *arg);
 int		philo_getopt(int argc, char *argv[], t_philo_option *out);
 
 int		dpp_fork_try_take(t_fork *fork, size_t x,
