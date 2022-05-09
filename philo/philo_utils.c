@@ -6,7 +6,7 @@
 /*   By: jkong <jkong@student.42seoul.kr>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/07 19:31:09 by jkong             #+#    #+#             */
-/*   Updated: 2022/05/09 02:52:44 by jkong            ###   ########.fr       */
+/*   Updated: 2022/05/09 12:31:46 by jkong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,8 @@ static time_t	_get_timestamp(struct timeval *tv_base)
 	return (dsec * 1000 + dusec / 1000);
 }
 
-int	dpp_fork_try_take(t_fork *fork, struct timeval *time, time_t timeout)
+int	dpp_fork_try_take(t_fork *fork,
+		struct timeval *time, time_t timeout)
 {
 	int	acquire;
 
@@ -40,7 +41,7 @@ int	dpp_fork_try_take(t_fork *fork, struct timeval *time, time_t timeout)
 		pthread_mutex_unlock(&fork->lock);
 		if (acquire)
 			return (0);
-		else if (usleep(DPP_MEAL_LIMIT / DPP_DIVIDER) != 0)
+		if (usleep(DPP_LIMIT / DPP_RATE) != 0)
 			return (-1);
 	}
 	return (1);
@@ -58,27 +59,28 @@ void	dpp_send_message(t_problem *problem, size_t i, const char *str)
 	const size_t	x = i + 1;
 	time_t			timestamp_in_mili;
 
-//	pthread_mutex_lock(&problem->lock);
+	pthread_mutex_lock(&problem->lock);
 	timestamp_in_mili = _get_timestamp(&problem->begin);
 	printf("%06ld %03lu %s\n", timestamp_in_mili, x, str);
-//	pthread_mutex_unlock(&problem->lock);
+	pthread_mutex_unlock(&problem->lock);
 }
 
-int	dpp_delay(t_problem *problem, time_t time)
+int	dpp_delay(t_problem *problem, time_t timespan,
+		struct timeval *time, time_t timeout)
 {
 	int *const		token = &problem->cancel;
 	struct timeval	tv;
 	int				interrupted;
 
 	gettimeofday(&tv, NULL);
-	while (_get_timestamp(&tv) < time)
+	while (_get_timestamp(&tv) < timespan && !(_get_timestamp(time) > timeout))
 	{
 		pthread_mutex_lock(&problem->lock);
 		interrupted = *token;
 		pthread_mutex_unlock(&problem->lock);
 		if (interrupted)
 			return (1);
-		if (usleep(DPP_MEAL_LIMIT / DPP_DIVIDER) != 0)
+		if (usleep(DPP_LIMIT / DPP_RATE) != 0)
 			return (-1);
 	}
 	return (0);
