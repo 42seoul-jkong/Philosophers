@@ -40,7 +40,6 @@ all: $(TARGET)
 clean:				;	$(RM) -r $(OBJECTS_DIR)
 fclean: clean		;	$(RM) $(TARGET)
 re: fclean			;	make all
-bonus: all
 
 $(OBJECTS_DIR):
 	mkdir $(OBJECTS_DIR)
