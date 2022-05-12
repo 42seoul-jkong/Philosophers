@@ -6,7 +6,7 @@
 /*   By: jkong <jkong@student.42seoul.kr>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/04 22:11:46 by jkong             #+#    #+#             */
-/*   Updated: 2022/05/10 00:46:58 by jkong            ###   ########.fr       */
+/*   Updated: 2022/05/11 20:36:04 by jkong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,7 +68,6 @@ static void	_final(t_problem *problem, t_philo *philos, t_fork *forks)
 	}
 	gettimeofday(&problem->begin, NULL);
 	pthread_mutex_unlock(&problem->lock);
-	usleep(DPP_YIELD);
 	i = n;
 	while (i-- > 0)
 		pthread_join(philos[i].thread_id, &philos[i].thread_res);
@@ -90,7 +89,7 @@ int	main(int argc, char *argv[])
 	{
 		printf("Usage: %s number_of_philosophers time_to_die time_to_eat \
 time_to_sleep [number_of_times_each_philosopher_must_eat]\n", argv[0]);
-		return (1);
+		return (EXIT_FAILURE);
 	}
 	n = problem.opt.number_of_philosophers;
 	philos = malloc(n * sizeof(*philos));

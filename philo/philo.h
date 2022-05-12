@@ -6,23 +6,15 @@
 /*   By: jkong <jkong@student.42seoul.kr>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/04 22:11:46 by jkong             #+#    #+#             */
-/*   Updated: 2022/05/10 00:48:41 by jkong            ###   ########.fr       */
+/*   Updated: 2022/05/12 23:09:12 by jkong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef PHILO_H
 # define PHILO_H
 
-# ifndef DPP_LIMIT
-#  define DPP_LIMIT 10000L
-# endif
-
-# ifndef DPP_RATE
-#  define DPP_RATE 10
-# endif
-
 # ifndef DPP_YIELD
-#  define DPP_YIELD 1000L
+#  define DPP_YIELD 500L
 # endif
 
 # include <sys/time.h>
@@ -77,7 +69,8 @@ int		philo_getopt(int argc, char *argv[], t_philo_option *out);
 int		dpp_fork_try_take(t_fork *fork, size_t x,
 			struct timeval *time, time_t timeout);
 void	dpp_fork_put_down(t_fork *fork, size_t x);
-void	dpp_send_message(t_problem *problem, size_t x, const char *str);
+void	dpp_send_message(t_problem *problem, size_t x, const char *str,
+			int reentrant);
 int		dpp_delay(t_problem *problem, time_t timespan,
 			struct timeval *time, time_t timeout);
 

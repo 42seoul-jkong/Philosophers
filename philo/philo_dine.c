@@ -6,7 +6,7 @@
 /*   By: jkong <jkong@student.42seoul.kr>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/04 22:11:46 by jkong             #+#    #+#             */
-/*   Updated: 2022/05/10 02:01:59 by jkong            ###   ########.fr       */
+/*   Updated: 2022/05/12 23:05:33 by jkong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,8 +16,8 @@ static void	_philo_on_dead(t_philo_arg *p)
 {
 	const size_t	x = 1 + p->philosopher_number;
 
-	dpp_send_message(p->problem, x, "died");
 	pthread_mutex_lock(&p->problem->lock);
+	dpp_send_message(p->problem, x, "died", 1);
 	p->problem->cancel = 1;
 	pthread_mutex_unlock(&p->problem->lock);
 }
@@ -32,10 +32,10 @@ static int	_philo_eat(t_philo_arg *p, struct timeval *last_meal)
 	result = 0;
 	if (dpp_fork_try_take(p->fork[0], x, last_meal, timeout) == 0)
 	{
-		dpp_send_message(p->problem, x, "has taken a fork");
+		dpp_send_message(p->problem, x, "has taken a fork", 0);
 		if (dpp_fork_try_take(p->fork[1], x, last_meal, timeout) == 0)
 		{
-			dpp_send_message(p->problem, x, "is eating");
+			dpp_send_message(p->problem, x, "is eating", 0);
 			gettimeofday(last_meal, NULL);
 			delay = p->problem->opt.time_to_eat;
 			if (dpp_delay(p->problem, delay, last_meal, timeout) == 0)
@@ -62,18 +62,18 @@ void	*philo_dine(void *arg)
 	pthread_mutex_lock(&p->problem->lock);
 	last_meal = p->problem->begin;
 	pthread_mutex_unlock(&p->problem->lock);
-	if (p->philosopher_number & 1)
+	if (x & 1)
 		usleep(DPP_YIELD);
 	while (p->eat_counter-- > 0)
 	{
 		if (!_philo_eat(p, &last_meal))
 			break ;
-		dpp_send_message(p->problem, x, "is sleeping");
+		dpp_send_message(p->problem, x, "is sleeping", 0);
 		delay = p->problem->opt.time_to_sleep;
 		if (dpp_delay(p->problem, delay, &last_meal, timeout))
 			break ;
-		dpp_send_message(p->problem, x, "is thinking");
-		usleep(DPP_YIELD);
+		dpp_send_message(p->problem, x, "is thinking", 0);
+		dpp_delay(p->problem, DPP_YIELD, &last_meal, timeout * .8);
 	}
 	return (NULL);
 }

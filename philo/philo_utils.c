@@ -6,7 +6,7 @@
 /*   By: jkong <jkong@student.42seoul.kr>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/07 19:31:09 by jkong             #+#    #+#             */
-/*   Updated: 2022/05/09 21:55:06 by jkong            ###   ########.fr       */
+/*   Updated: 2022/05/12 22:58:28 by jkong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,7 @@ int	dpp_fork_try_take(t_fork *fork, size_t x,
 		pthread_mutex_unlock(&fork->lock);
 		if (acquire)
 			return (0);
-		if (usleep(DPP_LIMIT / DPP_RATE) != 0)
+		if (usleep(DPP_YIELD) != 0)
 			return (-1);
 	}
 	return (1);
@@ -53,16 +53,23 @@ void	dpp_fork_put_down(t_fork *fork, size_t x)
 	if (fork->taken == x)
 		fork->taken = 0;
 	pthread_mutex_unlock(&fork->lock);
+	usleep(DPP_YIELD);
 }
 
-void	dpp_send_message(t_problem *problem, size_t x, const char *str)
+void	dpp_send_message(t_problem *problem, size_t x, const char *str,
+			int reentrant)
 {
 	time_t			timestamp_in_mili;
 
-	pthread_mutex_lock(&problem->lock);
-	timestamp_in_mili = _get_timestamp(&problem->begin);
-	printf("%06ld %03lu %s\n", timestamp_in_mili, x, str);
-	pthread_mutex_unlock(&problem->lock);
+	if (!reentrant)
+		pthread_mutex_lock(&problem->lock);
+	if (!problem->cancel)
+	{
+		timestamp_in_mili = _get_timestamp(&problem->begin);
+		printf("%06ld %03lu %s\n", timestamp_in_mili, x, str);
+	}
+	if (!reentrant)
+		pthread_mutex_unlock(&problem->lock);
 }
 
 int	dpp_delay(t_problem *problem, time_t timespan,
@@ -80,7 +87,7 @@ int	dpp_delay(t_problem *problem, time_t timespan,
 		pthread_mutex_unlock(&problem->lock);
 		if (interrupted)
 			return (1);
-		if (usleep(DPP_LIMIT / DPP_RATE) != 0)
+		if (usleep(DPP_YIELD) != 0)
 			return (-1);
 	}
 	return (0);
