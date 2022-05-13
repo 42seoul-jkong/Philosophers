@@ -6,7 +6,7 @@
 /*   By: jkong <jkong@student.42seoul.kr>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/07 19:31:09 by jkong             #+#    #+#             */
-/*   Updated: 2022/05/14 01:11:19 by jkong            ###   ########.fr       */
+/*   Updated: 2022/05/14 02:05:51 by jkong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,4 +49,23 @@ int	dpp_delay(t_problem *problem, time_t timespan)
 			return (-1);
 	}
 	return (0);
+}
+
+void	dpp_wait(t_philo *philos, size_t n)
+{
+	size_t	i;
+	pid_t	pid;
+
+	i = n;
+	while (i-- > 0)
+	{
+		pid = waitpid(-1, &philos[i].process_res, 0);
+		if (WEXITSTATUS(philos[i].process_res) == EXIT_FAILURE)
+		{
+			i = 0;
+			while (i < n)
+				kill(philos[i++].process_id, SIGTERM);
+			break ;
+		}
+	}
 }

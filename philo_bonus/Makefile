@@ -20,7 +20,7 @@ OBJECTS_DIR = objs/
 HEADER = philo_bonus.h
 
 TARGET = philo_bonus
-SRCS = philo_bonus.c philo_bonus_dine.c philo_bonus_opt.c philo_bonus_utils.c
+SRCS = philo_bonus.c philo_bonus_dine.c philo_bonus_opt.c philo_bonus_utils.c philo_bonus_semaphore.c
 OBJS = $(addprefix $(OBJECTS_DIR), $(SRCS:.c=.o))
 
 CFLAGS += -pthread

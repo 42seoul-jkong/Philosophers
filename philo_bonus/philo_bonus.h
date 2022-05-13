@@ -6,7 +6,7 @@
 /*   By: jkong <jkong@student.42seoul.kr>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/04 22:11:46 by jkong             #+#    #+#             */
-/*   Updated: 2022/05/14 01:11:26 by jkong            ###   ########.fr       */
+/*   Updated: 2022/05/14 02:05:34 by jkong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,5 +92,11 @@ time_t	get_timestamp(struct timeval *tv_base);
 void	dpp_send_message(t_problem *problem, size_t x, const char *str,
 			int reentrant);
 int		dpp_delay(t_problem *problem, time_t timespan);
+void	dpp_wait(t_philo *philos, size_t n);
+
+int		dpp_sem_init(const char *name, int value, sem_t **sem_ptr);
+int		dpp_sem_open(const char *name, sem_t **sem_ptr);
+void	dpp_sem_close3(sem_t *s1, sem_t *s2, sem_t *s3);
+void	dpp_sem_unlink3(const char *s1, const char *s2, const char *s3);
 
 #endif

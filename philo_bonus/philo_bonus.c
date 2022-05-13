@@ -6,7 +6,7 @@
 /*   By: jkong <jkong@student.42seoul.kr>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/04 22:11:46 by jkong             #+#    #+#             */
-/*   Updated: 2022/05/14 01:14:45 by jkong            ###   ########.fr       */
+/*   Updated: 2022/05/14 02:08:35 by jkong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,23 +29,16 @@ static int	_init(t_problem *problem, t_philo *philos)
 	const size_t	n = problem->opt.number_of_philosophers;
 	const size_t	m = problem->opt.number_of_times_each_philosopher_must_eat;
 	size_t			i;
-	sem_t			*sem;
 
 	problem->name = DPP_MAIN_SEM_NAME;
-	sem = sem_open(problem->name, O_CREAT, S_IRWXU, 1);
-	if (sem == SEM_FAILED)
+	if (!dpp_sem_init(problem->name, 1, &problem->lock))
 		return (0);
-	problem->lock = sem;
 	problem->sub_name = DPP_SUB_SEM_NAME;
-	sem = sem_open(problem->sub_name, O_CREAT, S_IRWXU, 1);
-	if (sem == SEM_FAILED)
+	if (!dpp_sem_init(problem->sub_name, 1, &problem->sub_lock))
 		return (0);
-	problem->sub_lock = sem;
 	problem->forks.name = DPP_FORKS_SEM_NAME;
-	sem = sem_open(problem->forks.name, O_CREAT, S_IRWXU, n);
-	if (sem == SEM_FAILED)
+	if (!dpp_sem_init(problem->forks.name, n, &problem->forks.lock))
 		return (0);
-	problem->forks.lock = sem;
 	i = 0;
 	while (i < n)
 	{
@@ -59,32 +52,21 @@ static int	_init(t_problem *problem, t_philo *philos)
 
 static int	_init_child(t_problem *problem, int *process_res)
 {
-	sem_t	*sem;
+	int	s;
 
 	problem->lock = NULL;
 	problem->sub_lock = NULL;
 	problem->forks.lock = NULL;
-	sem = sem_open(problem->name, O_RDWR);
-	if (_proc_error(problem, sem == SEM_FAILED, 0, "sem_open"))
-	{
-		*process_res = EXIT_FAILURE;
+	*process_res = EXIT_FAILURE;
+	s = dpp_sem_open(problem->name, &problem->lock);
+	if (_proc_error(problem, s, 1, "sem_open"))
 		return (0);
-	}
-	problem->lock = sem;
-	sem = sem_open(problem->sub_name, O_RDWR);
-	if (_proc_error(problem, sem == SEM_FAILED, 0, "sem_open"))
-	{
-		*process_res = EXIT_FAILURE;
+	s = dpp_sem_open(problem->sub_name, &problem->sub_lock);
+	if (_proc_error(problem, s, 1, "sem_open"))
 		return (0);
-	}
-	problem->sub_lock = sem;
-	sem = sem_open(problem->forks.name, O_RDWR);
-	if (_proc_error(problem, sem == SEM_FAILED, 0, "sem_open"))
-	{
-		*process_res = EXIT_FAILURE;
+	s = dpp_sem_open(problem->forks.name, &problem->forks.lock);
+	if (_proc_error(problem, s, 1, "sem_open"))
 		return (0);
-	}
-	problem->forks.lock = sem;
 	*process_res = EXIT_SUCCESS;
 	return (1);
 }
@@ -102,30 +84,17 @@ static void	_final(t_problem *problem, t_philo *philos)
 		pid = fork();
 		if (_proc_error(problem, pid == -1, 0, "fork"))
 			break ;
-		if (pid == 0)
+		if (pid)
 		{
-			if (_init_child(problem, &philos[i].process_res))
-				philos[i].process_res = philo_dine(&philos[i].process_arg);
-			sem_close(problem->lock);
-			sem_close(problem->sub_lock);
-			sem_close(problem->forks.lock);
-			exit(philos[i].process_res);
+			philos[i++].process_id = pid;
+			continue ;
 		}
-		philos[i].process_id = pid;
-		i++;
+		if (_init_child(problem, &philos[i].process_res))
+			philos[i].process_res = philo_dine(&philos[i].process_arg);
+		dpp_sem_close3(problem->lock, problem->sub_lock, problem->forks.lock);
+		exit(philos[i].process_res);
 	}
-	i = n;
-	while (i-- > 0)
-	{
-		pid = waitpid(-1, &philos[i].process_res, 0);
-		if (WEXITSTATUS(philos[i].process_res) == EXIT_FAILURE)
-		{
-			i = 0;
-			while (i < n)
-				kill(philos[i++].process_id, SIGTERM);
-			return ;
-		}
-	}
+	dpp_wait(philos, n);
 }
 
 int	main(int argc, char *argv[])
@@ -142,9 +111,7 @@ time_to_sleep [number_of_times_each_philosopher_must_eat]\n", argv[0]);
 		return (EXIT_FAILURE);
 	}
 	n = problem.opt.number_of_philosophers;
-	sem_unlink(DPP_MAIN_SEM_NAME);
-	sem_unlink(DPP_SUB_SEM_NAME);
-	sem_unlink(DPP_FORKS_SEM_NAME);
+	dpp_sem_unlink3(DPP_MAIN_SEM_NAME, DPP_SUB_SEM_NAME, DPP_FORKS_SEM_NAME);
 	philos = malloc(n * sizeof(*philos));
 	if (philos)
 	{
@@ -153,8 +120,6 @@ time_to_sleep [number_of_times_each_philosopher_must_eat]\n", argv[0]);
 			_final(&problem, philos);
 	}
 	free(philos);
-	sem_unlink(DPP_MAIN_SEM_NAME);
-	sem_unlink(DPP_SUB_SEM_NAME);
-	sem_unlink(DPP_FORKS_SEM_NAME);
+	dpp_sem_unlink3(DPP_MAIN_SEM_NAME, DPP_SUB_SEM_NAME, DPP_FORKS_SEM_NAME);
 	return (problem.exit);
 }

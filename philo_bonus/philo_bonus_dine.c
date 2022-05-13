@@ -6,7 +6,7 @@
 /*   By: jkong <jkong@student.42seoul.kr>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/04 22:11:46 by jkong             #+#    #+#             */
-/*   Updated: 2022/05/14 01:15:33 by jkong            ###   ########.fr       */
+/*   Updated: 2022/05/14 02:10:02 by jkong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ static int	_philo_eat(t_philo_arg *p, struct timeval *last_meal)
 	return (result);
 }
 
-static void	*philo_inspector(void *arg)
+static void	*_philo_inspector(void *arg)
 {
 	t_philo_arg *const	p = arg;
 	const size_t		x = 1 + p->philosopher_number;
@@ -67,7 +67,7 @@ int	philo_dine(void *arg)
 	pthread_t			inspector_id;
 
 	p->last_meal = p->problem->begin;
-	if (pthread_create(&inspector_id, NULL, philo_inspector, arg) != 0)
+	if (pthread_create(&inspector_id, NULL, _philo_inspector, arg) != 0)
 		return (EXIT_FAILURE);
 	while (p->eat_counter-- > 0)
 	{
