@@ -6,7 +6,7 @@
 /*   By: jkong <jkong@student.42seoul.kr>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/07 19:31:09 by jkong             #+#    #+#             */
-/*   Updated: 2022/05/12 22:58:28 by jkong            ###   ########.fr       */
+/*   Updated: 2022/05/13 16:17:00 by jkong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,7 @@ int	dpp_fork_try_take(t_fork *fork, size_t x,
 		pthread_mutex_unlock(&fork->lock);
 		if (acquire)
 			return (0);
-		if (usleep(DPP_YIELD) != 0)
+		if (usleep(DPP_YIELD / 5) != 0)
 			return (-1);
 	}
 	return (1);

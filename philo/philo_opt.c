@@ -6,7 +6,7 @@
 /*   By: jkong <jkong@student.42seoul.kr>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/04 22:11:46 by jkong             #+#    #+#             */
-/*   Updated: 2022/05/07 03:41:04 by jkong            ###   ########.fr       */
+/*   Updated: 2022/05/13 17:51:06 by jkong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,6 +66,8 @@ int	philo_getopt(int argc, char *argv[], t_philo_option *out)
 		else
 			tmp = ~0UL;
 		out->number_of_times_each_philosopher_must_eat = tmp;
+		if ((out->time_to_die | out->time_to_eat | out->time_to_sleep) < 0)
+			return (0);
 		return (1);
 	}
 	return (0);

@@ -6,7 +6,7 @@
 /*   By: jkong <jkong@student.42seoul.kr>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/04 22:11:46 by jkong             #+#    #+#             */
-/*   Updated: 2022/05/12 23:05:33 by jkong            ###   ########.fr       */
+/*   Updated: 2022/05/13 17:50:50 by jkong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,7 +63,7 @@ void	*philo_dine(void *arg)
 	last_meal = p->problem->begin;
 	pthread_mutex_unlock(&p->problem->lock);
 	if (x & 1)
-		usleep(DPP_YIELD);
+		usleep(3 * DPP_YIELD);
 	while (p->eat_counter-- > 0)
 	{
 		if (!_philo_eat(p, &last_meal))
@@ -73,7 +73,7 @@ void	*philo_dine(void *arg)
 		if (dpp_delay(p->problem, delay, &last_meal, timeout))
 			break ;
 		dpp_send_message(p->problem, x, "is thinking", 0);
-		dpp_delay(p->problem, DPP_YIELD, &last_meal, timeout * .8);
+		dpp_delay(p->problem, 2 * DPP_YIELD, &last_meal, timeout * .8);
 	}
 	return (NULL);
 }
