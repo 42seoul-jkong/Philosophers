@@ -6,7 +6,7 @@
 /*   By: jkong <jkong@student.42seoul.kr>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/04 22:11:46 by jkong             #+#    #+#             */
-/*   Updated: 2022/05/14 02:05:34 by jkong            ###   ########.fr       */
+/*   Updated: 2022/05/14 14:32:41 by jkong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,7 +82,6 @@ typedef struct s_philo
 {
 	pid_t		process_id;
 	t_philo_arg	process_arg;
-	int			process_res;
 }	t_philo;
 
 int		philo_dine(void *arg);
@@ -92,7 +91,7 @@ time_t	get_timestamp(struct timeval *tv_base);
 void	dpp_send_message(t_problem *problem, size_t x, const char *str,
 			int reentrant);
 int		dpp_delay(t_problem *problem, time_t timespan);
-void	dpp_wait(t_philo *philos, size_t n);
+void	dpp_wait(t_problem *problem, t_philo *philos);
 
 int		dpp_sem_init(const char *name, int value, sem_t **sem_ptr);
 int		dpp_sem_open(const char *name, sem_t **sem_ptr);

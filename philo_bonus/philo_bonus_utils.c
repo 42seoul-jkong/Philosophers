@@ -6,7 +6,7 @@
 /*   By: jkong <jkong@student.42seoul.kr>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/07 19:31:09 by jkong             #+#    #+#             */
-/*   Updated: 2022/05/14 02:05:51 by jkong            ###   ########.fr       */
+/*   Updated: 2022/05/14 14:33:50 by jkong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,21 +51,31 @@ int	dpp_delay(t_problem *problem, time_t timespan)
 	return (0);
 }
 
-void	dpp_wait(t_philo *philos, size_t n)
+void	dpp_wait(t_problem *problem, t_philo *philos)
 {
-	size_t	i;
-	pid_t	pid;
+	const size_t	n = problem->opt.number_of_philosophers;
+	size_t			i;
+	pid_t			pid;
+	int				process_res;
 
+	if (!problem->cancel)
+		problem->exit = EXIT_SUCCESS;
+	problem->cancel = 0;
 	i = n;
 	while (i-- > 0)
 	{
-		pid = waitpid(-1, &philos[i].process_res, 0);
-		if (WEXITSTATUS(philos[i].process_res) == EXIT_FAILURE)
+		pid = waitpid(-1, &process_res, 0);
+		(void)pid;
+		if (WEXITSTATUS(process_res) == EXIT_FAILURE)
 		{
-			i = 0;
-			while (i < n)
-				kill(philos[i++].process_id, SIGTERM);
-			break ;
+			if (!problem->cancel)
+			{
+				i = 0;
+				while (i < n)
+					kill(philos[i++].process_id, SIGTERM);
+				problem->exit = EXIT_FAILURE;
+				problem->cancel = 1;
+			}
 		}
 	}
 }

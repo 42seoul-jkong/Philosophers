@@ -6,7 +6,7 @@
 /*   By: jkong <jkong@student.42seoul.kr>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/04 22:11:46 by jkong             #+#    #+#             */
-/*   Updated: 2022/05/14 02:08:35 by jkong            ###   ########.fr       */
+/*   Updated: 2022/05/14 14:33:31 by jkong            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,6 +76,7 @@ static void	_final(t_problem *problem, t_philo *philos)
 	const size_t	n = problem->opt.number_of_philosophers;
 	size_t			i;
 	pid_t			pid;
+	int				process_res;
 
 	gettimeofday(&problem->begin, NULL);
 	i = 0;
@@ -89,12 +90,12 @@ static void	_final(t_problem *problem, t_philo *philos)
 			philos[i++].process_id = pid;
 			continue ;
 		}
-		if (_init_child(problem, &philos[i].process_res))
-			philos[i].process_res = philo_dine(&philos[i].process_arg);
+		if (_init_child(problem, &process_res))
+			process_res = philo_dine(&philos[i].process_arg);
 		dpp_sem_close3(problem->lock, problem->sub_lock, problem->forks.lock);
-		exit(philos[i].process_res);
+		exit(process_res);
 	}
-	dpp_wait(philos, n);
+	dpp_wait(problem, philos);
 }
 
 int	main(int argc, char *argv[])
