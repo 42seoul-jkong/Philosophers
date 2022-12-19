@@ -68,7 +68,6 @@ static void	_final(t_problem *problem, t_philo *philos, t_fork *forks)
 	}
 	gettimeofday(&problem->begin, NULL);
 	pthread_mutex_unlock(&problem->lock);
-	i = n;
 	while (i-- > 0)
 		pthread_join(philos[i].thread_id, &philos[i].thread_res);
 	i = 0;
